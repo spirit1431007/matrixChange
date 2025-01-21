@@ -1,0 +1,23 @@
+.zm-container {
+  position: relative;
+  overflow: hidden;
+
+  .zm-item {
+    position: absolute;
+    overflow: hidden;
+    z-index: 2;
+  }
+
+  .zm-child {
+    background-size: cover;
+    display: block;
+    position: absolute;
+    z-index: 1;
+    background-position: 50% 50%;
+  }
+
+  .zm-default {
+    transform: scale(0);
+    border-radius: 50%;
+  }
+}

@@ -1,69 +1,45 @@
-interface eventGroupType {
-  [eventName: string]: Function[];
-}
-
-let uid = 0;
+type Listener<T> = (event: T, ...rest: any[]) => void;
 
 export class Event {
-  id: number = uid++;
-  _events: eventGroupType = {};
+  _events: Record<string, Function[]> = {};
 
-  $on<T>(eventName: string, fn: (event: T, ...rest: any[]) => void): this {
-    if (!this._events[eventName]) {
-      this._events[eventName] = [];
+  $on<T>(name: string, listener: Listener<T>): this {
+    if (!this._events[name]) {
+      this._events[name] = [];
     }
-    this._events[eventName].push(fn);
+    this._events[name].push(listener);
     return this;
   }
 
-  $once<T>(eventName: string, fn: (event: T, ...rest: any[]) => void) {
-    let proxyFun = (event: T, ...rest: any[]) => {
-      this.$off(eventName, proxyFun);
-      fn.call(this, event, ...rest);
-    };
-    // @ts-ignore
-    proxyFun.fn = fn;
-    this.$on(eventName, proxyFun);
-    return this;
-  }
-
-  $off(eventName: string, fn: Function) {
-    // 清空所有事件
-    if (!arguments.length) {
+  $off<T>(name?: string, listener?: Listener<T>): this {
+    if (!name || !listener) {
       this._events = {};
       return this;
     }
-    // 若没有事件对应的函数列表则不用处理
-    const cbs = this._events[eventName];
-    if (!cbs) {
+
+    const listeners = this._events[name];
+    if (!listeners) {
       return this;
     }
-    // 清空特定事件
-    if (!fn) {
-      this._events[eventName] = [];
+
+    if (!listener) {
+      this._events[name] = [];
       return this;
     }
-    // 取消特定事件的特定处理函数
-    if (fn) {
-      let cb;
-      let i = cbs.length;
-      while (i--) {
-        cb = cbs[i];
-        // @ts-ignore
-        if (cb === fn || cb.fn === fn) {
-          cbs.splice(i, 1);
-          break;
-        }
-      }
+
+    if (listener) {
+      this._events[name] = this._events[name].filter((each) => each !== listener);
     }
+
     return this;
   }
 
-  $emit<T>(eventName: string, event?: T, ...rest: any[]) {
-    let cbs = this._events[eventName];
-    if (cbs) {
-      cbs.forEach((func) => func.call(this, event, ...rest));
+  $emit<T>(name: string, event?: T, ...rest: any[]) {
+    let listeners = this._events[name];
+    if (listeners) {
+      listeners.forEach((each) => each.call(this, event, ...rest));
     }
+
     return this;
   }
 }

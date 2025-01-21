@@ -1,14 +1,23 @@
 {
   "compilerOptions": {
-    "outDir": "./lib",
-    "target": "es6",
-    "module": "es6",
+    "sourceMap": true,
+
+    /* Module */
+    "target": "esnext",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "allowJs": true,
+
+    /* Linting */
     "strict": true,
-    "declaration": true,
-    "moduleResolution": "node"
-  },
-  "include": [
-    "./src/**/*"
-  ],
-  "declaration": true
+    "strictNullChecks": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    "outDir": "dist"
+  }
 }

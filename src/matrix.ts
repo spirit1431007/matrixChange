@@ -1,8 +1,8 @@
-import { modeType } from "./mode/index";
+import { modeType } from './mode/index';
 
-import { Event } from "./event";
+import { Event } from './event';
 
-export interface hitPointParams<T> {
+export interface HitPointParams<T> {
   point: {
     x: number;
     y: number;
@@ -29,13 +29,14 @@ export default class Matrix extends Event {
     }
 
     mode.init(this.row, this.col);
-    this.$emit("matrixChangeStart");
+    this.$emit('matrixChangeStart');
     this.lock = true;
+
     let timer = setInterval(() => {
       for (let i = 0; i < this.row; i++) {
         for (let j = 0; j < this.col; j++) {
           if (mode.check(i, j)) {
-            this.$emit<hitPointParams<T>>("hitPoint", {
+            this.$emit<HitPointParams<T>>('hitPoint', {
               point: {
                 x: i,
                 y: j,
@@ -49,7 +50,7 @@ export default class Matrix extends Event {
       }
       if (mode.end()) {
         clearInterval(timer);
-        this.$emit("matrixChangeEnd");
+        this.$emit('matrixChangeEnd');
       }
       mode.next();
     }, mode.interval);

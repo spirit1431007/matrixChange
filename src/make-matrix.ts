@@ -1,30 +1,22 @@
-import { modeType } from "./mode/index";
+import { modeType } from './mode/index';
 
-import Matrix, { hitPointParams } from "./matrix";
-import { initContainerLayout, initDom } from "./init-html";
-import { getRandom, getRandomStr } from "./util";
+import Matrix, { HitPointParams } from './matrix';
+import { initContainerLayout, initDom } from './init-dom';
+import { getRandom, getRandomStr } from './util';
 
-interface matrixOption {
+interface MatrixOption {
   images: string[];
   nameSpace?: string;
   row?: number;
   col?: number;
 }
 
-interface hitPointOption {
+interface HitPointOption {
   image?: string;
   className?: string;
   animate?: boolean;
   classNameIn?: string;
   classNameOut?: string;
-}
-
-interface makeMatrixChangeReturn {
-  matrixChange: Matrix;
-
-  movePoint(mode: modeType, option?: hitPointOption): void;
-
-  changeImages(images: string[]): void;
 }
 
 let defaultOption = {
@@ -34,28 +26,25 @@ let defaultOption = {
   images: [],
 };
 
-export function makeMatrixChange(
-  dom: HTMLElement,
-  optionIn: matrixOption,
-): makeMatrixChangeReturn {
-  let option = { ...defaultOption, ...optionIn };
+export function createMatrix(dom: HTMLElement, option: MatrixOption) {
+  let sureOption = { ...defaultOption, ...option };
 
-  initContainerLayout(option.nameSpace, option.row, option.col);
-  let domMatrix = initDom(dom, option.nameSpace, option.row, option.col);
+  initContainerLayout(sureOption.row, sureOption.col);
+  let domMatrix = initDom(dom, sureOption.nameSpace, sureOption.row, sureOption.col);
 
-  let matrix = new Matrix(option.row, option.col);
-  let image = option.images[0];
+  let matrix = new Matrix(sureOption.row, sureOption.col);
+  let image = sureOption.images[0];
 
-  matrix.$on("matrixChangeStart", () => {
-    let num = getRandom(option.images.length - 1);
-    image = option.images[num];
-    matrix.$emit("changeStart");
+  matrix.$on('matrixChangeStart', () => {
+    let num = getRandom(sureOption.images.length - 1);
+    image = sureOption.images[num];
+    matrix.$emit('changeStart');
   });
 
-  matrix.$on<hitPointParams<hitPointOption>>("hitPoint", (event) => {
+  matrix.$on<HitPointParams<HitPointOption>>('hitPoint', (event) => {
     image = event.option.image ? event.option.image : image;
-    let classNameIn = "";
-    let classNameOut = "defaultChange";
+    let classNameIn = '';
+    let classNameOut = 'defaultChange';
 
     if (event.option.classNameIn && event.option.classNameOut) {
       event.option.animate = true;
@@ -74,12 +63,12 @@ export function makeMatrixChange(
 
     if (event.option.animate) {
       let listenAnimation = () => {
-        if (dom.dataset.mchange === "2") {
+        if (dom.dataset.mchange === '2') {
           dom.className = baseClass;
-          dom.dataset.mchange = "";
-          dom.removeEventListener("animationend", listenAnimation);
+          dom.dataset.mchange = '';
+          dom.removeEventListener('animationend', listenAnimation);
           if (event.end) {
-            matrix.$emit("changeEnd");
+            matrix.$emit('changeEnd');
             matrix.lock = false;
           }
           return;
@@ -88,44 +77,44 @@ export function makeMatrixChange(
         // 所以先将元素隐藏
         // 防止因为出场动画和入场动画一样而导致没有出场动画
         // 出场动画在下一个 event loop 内设置
-        dom.className = baseClass + " mc-hidden";
+        dom.className = baseClass + ' mc-hidden';
         setTimeout(() => {
           dom.className = `${baseClass} ${classNameIn}`;
         }, 20);
-        dom.dataset.mchange = "2";
+        dom.dataset.mchange = '2';
         let child = <HTMLElement>dom.children[0];
         child.style.backgroundImage = `url(${image})`;
       };
 
-      dom.addEventListener("animationend", listenAnimation);
+      dom.addEventListener('animationend', listenAnimation);
     } else {
       let listenTransition = () => {
-        dom.dataset.mchange = "";
+        dom.dataset.mchange = '';
         dom.className = baseClass;
-        dom.removeEventListener("transitionend", listenTransition);
+        dom.removeEventListener('transitionend', listenTransition);
         let child = <HTMLElement>dom.children[0];
         child.style.backgroundImage = `url(${image})`;
         if (event.end) {
-          matrix.$emit("changeEnd");
+          matrix.$emit('changeEnd');
           matrix.lock = false;
         }
       };
 
-      dom.addEventListener("transitionend", listenTransition);
+      dom.addEventListener('transitionend', listenTransition);
     }
 
     dom.className = `${baseClass} ${classNameOut}`;
-    dom.dataset.mchange = "1";
-    dom.style.transition = event.mode.duration / 1000 + "s";
+    dom.dataset.mchange = '1';
+    dom.style.transition = event.mode.duration / 1000 + 's';
   });
 
   return {
     matrixChange: matrix,
-    movePoint: (mode, option = {}) => {
-      matrix.movePoint<hitPointOption>(mode, option);
+    movePoint: (mode: modeType, option = {}) => {
+      matrix.movePoint<HitPointOption>(mode, option);
     },
-    changeImages(images) {
-      option.images = images;
+    changeImages(images: string[]) {
+      sureOption.images = images;
     },
   };
 }
