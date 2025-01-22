@@ -1,10 +1,10 @@
-import { modeType } from "./index";
+import { modeType } from './index';
 
 /**
  *  根据随机值产生的线性动画归类，方向代表 t-上 b-下 l-左 r-右
  */
 
-import { getRandom } from "../util";
+import { getRandom } from '../util';
 
 /**
  *  按照行划分，以 getRandom(row + col, 2) 为一组，每次运动每组一块

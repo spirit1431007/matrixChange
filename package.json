@@ -20,11 +20,10 @@
   ],
   "license": "MIT",
   "scripts": {
-    "dev": "webpack serve --hot --config build/dev.webpack.config.js",
-    "build": "webpack --config build/prod.webpack.config.js && gulp build_ts",
-    "build:ts": "gulp build_ts",
-    "lint": "eslint src --ext .ts"
+    "dev": "vite"
   },
   "devDependencies": {
+    "sass": "^1.83.4",
+    "vite": "^6.0.11"
   }
 }

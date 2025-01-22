@@ -1,12 +1,12 @@
 import { modeType } from './mode/index';
 
-import Matrix, { HitPointParams } from './matrix';
-import { initContainerLayout, initDom } from './init-dom';
-import { getRandom, getRandomStr } from './util';
+import Matrix, { HitPointEvent } from './matrix';
+import { initLayout, initDom } from './init-dom';
+import { getRandom } from './util';
+import { CHANGE_STEP } from './const';
 
 interface MatrixOption {
   images: string[];
-  nameSpace?: string;
   row?: number;
   col?: number;
 }
@@ -20,7 +20,6 @@ interface HitPointOption {
 }
 
 let defaultOption = {
-  nameSpace: getRandomStr(8),
   row: 7,
   col: 9,
   images: [],
@@ -29,22 +28,21 @@ let defaultOption = {
 export function createMatrix(dom: HTMLElement, option: MatrixOption) {
   let sureOption = { ...defaultOption, ...option };
 
-  initContainerLayout(sureOption.row, sureOption.col);
-  let domMatrix = initDom(dom, sureOption.nameSpace, sureOption.row, sureOption.col);
+  initLayout(sureOption.row, sureOption.col);
+  let domMatrix = initDom(dom, sureOption.row, sureOption.col);
 
   let matrix = new Matrix(sureOption.row, sureOption.col);
   let image = sureOption.images[0];
 
-  matrix.$on('matrixChangeStart', () => {
+  matrix.$on('changeStart', () => {
     let num = getRandom(sureOption.images.length - 1);
     image = sureOption.images[num];
-    matrix.$emit('changeStart');
   });
 
-  matrix.$on<HitPointParams<HitPointOption>>('hitPoint', (event) => {
+  matrix.$on<HitPointEvent<HitPointOption>>('hitPoint', (event) => {
     image = event.option.image ? event.option.image : image;
     let classNameIn = '';
-    let classNameOut = 'defaultChange';
+    let classNameOut = 'zm-default';
 
     if (event.option.classNameIn && event.option.classNameOut) {
       event.option.animate = true;
@@ -55,17 +53,18 @@ export function createMatrix(dom: HTMLElement, option: MatrixOption) {
     }
 
     let dom = domMatrix[event.point.x][event.point.y];
-    if (dom.dataset.mchange) {
+    if (dom.dataset.step && dom.dataset.step !== CHANGE_STEP.INIT) {
       return;
     }
 
-    let baseClass = dom.dataset.baseclass as string;
+    let baseClass = dom.dataset.class as string;
 
     if (event.option.animate) {
       let listenAnimation = () => {
-        if (dom.dataset.mchange === '2') {
+        if (dom.dataset.step === CHANGE_STEP.START_OUT) {
           dom.className = baseClass;
-          dom.dataset.mchange = '';
+          dom.dataset.step = CHANGE_STEP.INIT;
+
           dom.removeEventListener('animationend', listenAnimation);
           if (event.end) {
             matrix.$emit('changeEnd');
@@ -73,27 +72,22 @@ export function createMatrix(dom: HTMLElement, option: MatrixOption) {
           }
           return;
         }
-        // 当动画结束时，进行出场动画时，会有段时间的显示状态，当性能不佳时会显示出来，造成页面闪烁
-        // 所以先将元素隐藏
-        // 防止因为出场动画和入场动画一样而导致没有出场动画
-        // 出场动画在下一个 event loop 内设置
-        dom.className = baseClass + ' mc-hidden';
-        setTimeout(() => {
-          dom.className = `${baseClass} ${classNameIn}`;
-        }, 20);
-        dom.dataset.mchange = '2';
-        let child = <HTMLElement>dom.children[0];
+
+        dom.className = `${baseClass} ${classNameIn}`;
+        dom.dataset.step = CHANGE_STEP.START_OUT;
+        let child = dom.children[0] as HTMLElement;
         child.style.backgroundImage = `url(${image})`;
       };
 
       dom.addEventListener('animationend', listenAnimation);
     } else {
       let listenTransition = () => {
-        dom.dataset.mchange = '';
+        dom.dataset.step = CHANGE_STEP.INIT;
         dom.className = baseClass;
-        dom.removeEventListener('transitionend', listenTransition);
-        let child = <HTMLElement>dom.children[0];
+        let child = dom.children[0] as HTMLElement;
         child.style.backgroundImage = `url(${image})`;
+
+        dom.removeEventListener('transitionend', listenTransition);
         if (event.end) {
           matrix.$emit('changeEnd');
           matrix.lock = false;
@@ -104,7 +98,7 @@ export function createMatrix(dom: HTMLElement, option: MatrixOption) {
     }
 
     dom.className = `${baseClass} ${classNameOut}`;
-    dom.dataset.mchange = '1';
+    dom.dataset.step = CHANGE_STEP.START_IN;
     dom.style.transition = event.mode.duration / 1000 + 's';
   });
 
